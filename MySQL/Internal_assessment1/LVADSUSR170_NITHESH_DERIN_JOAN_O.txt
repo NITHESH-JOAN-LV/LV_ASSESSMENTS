@@ -1,0 +1,38 @@
+1.
+select distinct (CustomerID) from customerinteractions where DataUsed > (
+select avg(DataUsed) from customerinteractions where Month="March" and Year=2024) and Month="March" and Year=2024;
+
+2.
+select CustomerID,Month,max(CallDuration),min(CallDuration)  from customerinteractions  group by 1,2 order by 1,2;
+
+
+3.
+select CustomerID,Month,max(MessageCount) as max_msg_count,min(MessageCount) as min_msg_count, max(DataUsed)as max_dataUsed,min(DataUsed) as min_dataUsed from customerinteractions  group by 1,2 order by 1,2;
+
+4.
+select ProductTypeID, sum(TotalSalesAmount) as total_sales from quarterlysales group by 1
+order by 2 desc;
+
+5.
+select ProductTypeID, sum(TotalSalesAmount) from quarterlysales where Quarter="Q1" and Year=2024 group by 1 order by 2 desc limit 1;
+
+6.
+select ProductTypeID, avg((TotalSalesAmount)/UnitsSold) as avg_sales from quarterlysales where Quarter="Q2" and Year=2024  and ProductTypeID=1
+group by 1 order by 2 desc;
+
+8.
+select Sector, Month, sum(ConsumptionKWH) from sectorenergyconsumption where Year= 2024 group by 1,2;
+
+9.
+select EnergySource,sum(ConsumptionKWH) from sectorenergyconsumption where Month="February" and  Year= 2024 group by 1;
+
+10.
+select CustomerName from insuranceactivities where Investigation="No" and (FeedbackScore>(select avg(FeedbackScore) from insuranceactivities) 
+or 
+ClaimsCount>(select avg(ClaimsCount) from insuranceactivities));
+
+11.
+select CustomerName, sum(AnnualPremium) as total_revenue from insuranceactivities where ClaimsCount>=1 and Investigation="No"
+and FeedbackScore>(select avg(FeedbackScore) from insuranceactivities) group by CustomerName;
+
+12.select PolicyType,ClaimsCount, avg(FeedbackScore) from insuranceactivities group by 1,2;
