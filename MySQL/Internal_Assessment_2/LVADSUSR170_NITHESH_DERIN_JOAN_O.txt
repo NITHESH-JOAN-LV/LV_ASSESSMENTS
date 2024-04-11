@@ -1,0 +1,61 @@
+1.
+select * from l1_maintenance_records where maintenance_date like '2024-03%' and cost>(select avg(cost)
+from l1_maintenance_records where maintenance_date like '2024-03%');
+
+2.
+select maintenance_type from l1_maintenance_records where maintenance_date like '2024-03%' group by 1 having count(*)=
+(select max(cnt) from (select count(*) as cnt from l1_maintenance_records where maintenance_date like '2024-03%' 
+group by maintenance_type) as t);
+
+3.
+#Most work
+select technician_name  from l1_maintenance_records  where maintenance_date like '2024-03%' group by 1 having count(*)=
+(select max(cnt) from (select count(*) as cnt from l1_maintenance_records where maintenance_date like '2024-03%' 
+group by technician_name) as t);
+
+#High Avg Cost
+select technician_name  from l1_maintenance_records  where maintenance_date like '2024-03%' group by 1 having avg(cost)=
+(select max(avg_cost) from (select avg(cost) as avg_cost from l1_maintenance_records where maintenance_date like '2024-03%' 
+group by technician_name) as t);
+
+4.
+select product_id, round(avg(avg_before_update-avg_after_update),2) from (select product_id , avg(incident_count_pre_update) as avg_before_update, avg(incident_count_post_update) as avg_after_update
+from l2_updates group by 1) as t group by 1;
+
+5.
+select update_id,max(((incident_count_post_update)/incident_count_pre_update)*100) as percnet_of_incident , max(user_feedback_score)from l2_updates 
+group by 1 order by 3 desc,2 asc limit 1;
+
+6.
+select product_id,max(((incident_count_post_update)/incident_count_pre_update)*100) as percnet_of_incident , min(user_feedback_score)from l2_updates 
+group by 1 order by 3 asc ,2 desc limit 1;
+
+7.
+select facility_name from l3_facilities join l3_visits using(facility_id) where reason_for_visit='Emergency' and  visit_date like'2024-03%'
+group by 1 having count(*)=(select max(visits) from (select count(*) as visits from l3_facilities join l3_visits using(facility_id) 
+where reason_for_visit='Emergency' and  visit_date like'2024-03%'group by facility_name) as t);
+
+
+8.
+select facility_name from l3_facilities join l3_visits using(facility_id) where reason_for_visit='Emergency' and  visit_date like'2024-03%'
+group by 1 having count(*)=(select max(visits) from (select count(*) as visits from l3_facilities join l3_visits using(facility_id) 
+where reason_for_visit='Emergency' and  visit_date like'2024-03%'group by facility_name) as t)
+
+9.
+select insurance_provider from l3_patients join l3_visits using(patient_id) join l3_treatments using(visit_id)
+ where outcome='complicated' and extract(quarter from visit_date)=1;
+
+10.
+ select product_id,product_name,category from l4_products l where product_id in (select product_id, max(total) from (select quantity*sales as total from l4_products p join l4_sales using(product_id)
+ where l.category=p.category and sale_date like '2024-03%') as t  group by product_id);
+
+11.
+ create view total_sales as
+ select * from l4_sales join l4_stores using(store_id);
+  
+ select region from (select *,quantity*price as total from total_sales join l4_products using(product_id)
+ order by 2 desc)as t
+ limit 1;
+
+12.
+ select * from l4_sales full join l4_products left join l4_stores using(store_id) where sale_date like '2024-03%';
