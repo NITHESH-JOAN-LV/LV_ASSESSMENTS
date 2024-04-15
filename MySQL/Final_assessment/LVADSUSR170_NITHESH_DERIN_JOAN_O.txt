@@ -1,0 +1,120 @@
+1.
+select product_category,avg(sales_amount) as avg_amount from sales_records s join products p using(product_id) 
+where sales_date between date_sub(curdate(),interval 30 day) and curdate()
+group by 1;
+
+2.
+with top_revenue_products as(
+select product_name,sum(sales_amount) as total_revenue,rank() over(order by sum(sales_amount) desc) as rnk from sales_records s join products p using(product_id)
+group by 1)
+select * from top_revenue_products limit 3;
+
+
+3.
+with customer_contribution as 
+(select customer_id,sum(sales_amount) as total_revenue,(sum(sales_amount)/(select sum(sales_amount) from sales_records))*100
+as customer_contribution
+from sales_records group by 1)
+select *,percent_rank() over(order by customer_contribution desc) from customer_contribution;
+
+4.
+with cte as(
+select customer_id,count(*) as count from sales_records s join products p using(product_id) join customers c using(customer_id) 
+where sales_date between date_sub(curdate(),interval 6 month) and curdate()
+group by 1)
+select *,case when count>=4 then 'Consistent Buyers';
+
+5.
+select departure_airport,arrival_airport,avg(ticket_price) as avg_ticket_price from flights f
+join tickets t using(flight_id) group by 1,2;
+
+6.
+select flight_number,departure_date,count(*) as total_tickets_sold from flights f join tickets t using(flight_id) 
+where ticket_date between date_sub(curdate(), interval 1 month) and curdate()
+group by 1,2
+order by 3 desc;
+
+
+7.
+select passenger_name,sum(ticket_price) as total_amount_spent,frequent_flyer_status
+from passengers p join tickets t using(passenger_id) 
+group by 1,3
+order by 2 desc
+limit 5;
+
+8.
+select monthname(ticket_date) as Month,sum(ticket_price) as total_sales,count(*) as no_of_tickets_sold from tickets
+group by monthname(ticket_date) 
+order by 2 desc,3 asc
+limit 1;
+
+9.
+select player_id,game_genre,abs(datediff(play_date,registration_date)*24*60) as played_mins from games g 
+join playerscores ps using(game_id) join players p using(player_id);
+
+10.
+select game_name ,count(*) as no_of_players from games g 
+join playerscores ps using(game_id) join players p using(player_id) group by 1
+order by 2 desc
+limit 3;
+
+
+11.
+select game_name, avg(score) as avg_score, max(score) as highest_score,count(*) as no_of_players
+from games g join playerscores ps using(game_id) join players p using(player_id)
+group by 1
+order by 2 desc,3 desc,4 desc;
+
+12.
+with cte as(
+select player_name,max(registration_date) as registration_date,max(play_date) last_play from games g join playerscores ps using(game_id) right join players p using(player_id)
+where play_date > date_sub(curdate(), interval 1 month) or player_id in (select player_id from playerscores)
+group by 1)
+select distinct player_name,registration_date, last_play  from cte;
+
+
+13.
+select doctor_name,sum(cost) as total_cost from patients p join treatments t using(patient_id) join doctors d using(doctor_id)
+group by 1
+order by 1 desc;
+
+14.
+with cte as(select sum(cost) as total_cost from patients p join treatments t using(patient_id))
+select treatment_name,sum(cost) as total_revenue,sum(cost)/(select total_cost from cte)*100 as contribution_to_total 
+from patients p join treatments t using(patient_id) 
+group by 1;
+
+
+16.
+select gender,round(avg(datediff(discharge_date,admission_date))) as avg_length_of_stay from  patients
+group by 1;
+
+17.
+select department,semester,avg(grade) as avg_grade 
+from students s join enrollments e using(student_id) join courses c using(course_id)
+group by 1,2
+order by 1,2;
+
+18.
+select major,enrollment_year,count(*) as no_of_students  from students s join enrollments e using(student_id) join courses c using(course_id)
+group by 1,2
+order by 3 desc
+limit 5;
+
+19.
+select student_id,student_name,semester,sum(credits) as total_credits 
+from students s join enrollments e using(student_id) join courses c using(course_id) 
+group by 1,2,3 having sum(credits)>=50;
+
+20.
+with year_rnk as (
+select enrollment_year,course_name,count(*) as no_of_students 
+from enrollments e join courses c using(course_id) join students s using(student_id) 
+where enrollment_year>=year(date_sub(curdate(),interval 5 year))
+group by 1,2
+order by 3 desc)
+select * from 
+(select enrollment_year,course_name,dense_rank() over(partition by enrollment_year order by no_of_students desc) as rnk 
+from year_rnk
+order by 1,3 desc) as t where rnk<4;
+
